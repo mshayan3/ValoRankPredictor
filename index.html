@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Valorant Leaderboard Statistics</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #94d0ee;
+            color: black;
+        }
+        h1, h2, h3, h4 {
+            text-align: center;
+        }
+        canvas {
+            display: block;
+            margin: 0 auto;
+            max-width: 600px;
+        }
+        .container {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">Valorant Data Set</a>
+        </div>
+    </nav>
+
+    <div class="container mt-5">
+        <div class="row">
+            <div class="col">
+                <h1>Valorant LeaderBoard Statistics</h1>
+                <h2>Episode 4: Act 3</h2>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col text-center">
+                <h3>Analysis By: The Marauders</h3>
+                <h4>Rao Mueez 20F-0315</h4>
+                <h4>Huzaif Bin Tariq 20F-0272</h4>
+                <h4>Abdul Rehman 20F-0238</h4>
+                <h4>Muhammad Shayan 20F-0348</h4>
+            </div>
+        </div>
+
+        <div class="row text-center">
+            <div class="col">
+                <img src="logo.png" height="300px" width="250px" alt="Logo">
+            </div>
+        </div>
+        
+        <div class="row mt-5">
+            <div class="col">
+                <h2>Intro</h2>
+                <h4>The data set consists of over 85,000 entries and we used this data to predict player rank...</h4>
+            </div>
+        </div>
+    </div>
+
+    <div class="container mt-5">
+        <div class="row">
+            <div class="col text-center">
+                <canvas id="winPercentChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="container mt-5">
+        <div class="row">
+            <div class="col">
+                <h1>Prediction</h1>
+                <label for="hp">Head percentage:</label>
+                <input type="number" id="hp" class="form-control" placeholder="Enter headshot percentage">
+                <label for="wp">Win percentage:</label>
+                <input type="number" id="wp" class="form-control" placeholder="Enter win percentage">
+                <label for="dpr">Damage Per Round:</label>
+                <input type="number" id="dpr" class="form-control" placeholder="Enter damage per round">
+                <label for="acs">Average Combat Score:</label>
+                <input type="number" id="acs" class="form-control" placeholder="Enter average combat score">
+                <label for="kd">Kill Death Ratio:</label>
+                <input type="number" id="kd" class="form-control" placeholder="Enter kill/death ratio">
+                <button class="btn btn-primary mt-3" onclick="calculateGuess()">Submit</button>
+            </div>
+        </div>
+    
+        <div class="row mt-3">
+            <div class="col">
+                <h1>Result</h1>
+                <p id="result"></p>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    <script>
+        // Load the CSV file and parse it using PapaParse
+        Papa.parse("Valo.csv", {
+            download: true,
+            header: true,
+            complete: function(results) {
+                var data = results.data;
+
+                // Process the data to create chart arrays
+                var regions = ['AP', 'BR', 'EU', 'KR', 'LAT', 'NAM'];
+                var winPercentData = [0, 0, 0, 0, 0, 0];
+                var winPercentCounts = [0, 0, 0, 0, 0, 0];
+
+                // Aggregate the data by region
+                data.forEach(function(row) {
+                    var region = row.region;
+                    var winPercent = parseFloat(row.win_percent);
+
+                    switch (region) {
+                        case 'AP':
+                            winPercentData[0] += winPercent;
+                            winPercentCounts[0]++;
+                            break;
+                        case 'BR':
+                            winPercentData[1] += winPercent;
+                            winPercentCounts[1]++;
+                            break;
+                        case 'EU':
+                            winPercentData[2] += winPercent;
+                            winPercentCounts[2]++;
+                            break;
+                        case 'KR':
+                            winPercentData[3] += winPercent;
+                            winPercentCounts[3]++;
+                            break;
+                        case 'LAT':
+                            winPercentData[4] += winPercent;
+                            winPercentCounts[4]++;
+                            break;
+                        case 'NAM':
+                            winPercentData[5] += winPercent;
+                            winPercentCounts[5]++;
+                            break;
+                    }
+                });
+
+                // Calculate the average win percentages
+                for (var i = 0; i < winPercentData.length; i++) {
+                    winPercentData[i] = winPercentData[i] / winPercentCounts[i];
+                }
+
+                // Create the chart
+                var ctx = document.getElementById('winPercentChart').getContext('2d');
+                var winPercentChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: regions,
+                        datasets: [{
+                            label: 'Avg Win% Comparison',
+                            data: winPercentData,
+                            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                            borderColor: 'rgba(75, 192, 192, 1)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                max: 60
+                            }
+                        }
+                    }
+                });
+            }
+        });
+
+        // Function to calculate the predicted rank score
+        function calculateGuess() {
+            var hp = parseFloat(document.getElementById('hp').value);
+            var wp = parseFloat(document.getElementById('wp').value);
+            var dpr = parseFloat(document.getElementById('dpr').value);
+            var acs = parseFloat(document.getElementById('acs').value);
+            var kd = parseFloat(document.getElementById('kd').value);
+
+            // Input validation
+            if (isNaN(hp) || isNaN(wp) || isNaN(dpr) || isNaN(acs) || isNaN(kd)) {
+                document.getElementById('result').innerText = 'Please enter valid numbers for all fields.';
+                return;
+            }
+
+            // Formula for guessing the predicted rank score
+            var guess = (-7.457e-13) + (0.3 * hp) + (0.3 * wp) + (4.290 * kd) + (0.005460 * acs) + (0.08340 * dpr);
+
+            document.getElementById('result').innerText = 'Predicted Score: ' + guess.toFixed(2);
+        }
+    </script>
+</body>
+</html>
